@@ -14,7 +14,8 @@ from .pipeline import Runner, load_json
 def cmd_run(args):
     r = Runner(verbose=not args.quiet)
     only = set(args.source or [])
-    r.run(only=only or None, dry_run=args.dry_run, no_store=args.no_store)
+    r.run(only=only or None, dry_run=args.dry_run, no_store=args.no_store,
+          deep=args.deep)
     if not args.no_report:
         rows, paths = r.report(min_score=args.min_score)
         print("\nReport written:")
@@ -225,6 +226,9 @@ def build_parser():
     r.add_argument("--no-report", action="store_true")
     r.add_argument("--open", action="store_true", help="open the HTML report when finished")
     r.add_argument("--quiet", "-q", action="store_true")
+    r.add_argument("--deep", type=int, default=1, metavar="N",
+                   help="multiply each source's page/detail cap by N for fuller "
+                        "coverage (slower). --deep 5 reads essentially everything.")
     r.set_defaults(func=cmd_run)
 
     rp = sub.add_parser("report", help="rebuild the report from stored jobs")

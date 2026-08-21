@@ -54,17 +54,29 @@ class Runner:
 
     # ------------------------------------------------------------------
 
-    def pick(self, only=None, skip_disabled=True):
+    def pick(self, only=None, skip_disabled=True, deep=1):
+        """Choose the sources to run.
+
+        ``deep`` multiplies the per-source page and detail caps. Those caps
+        keep a daily run quick, but they mean the biggest boards are only
+        partly read (NES Fircroft 180 of 584, Kintec 140 of 296, KBR 1200 of
+        1670). A deep run trades time for complete coverage.
+        """
         out = []
         for s in self.sources:
             if skip_disabled and not s.get("enabled", True):
                 continue
             if only and s.get("id") not in only and s.get("company", "") not in only:
                 continue
+            if deep and deep > 1:
+                s = dict(s)
+                for key in ("max_details", "max_pages"):
+                    if s.get(key):
+                        s[key] = int(s[key]) * int(deep)
             out.append(s)
         return out
 
-    def run(self, only=None, dry_run=False, no_store=False, progress=None):
+    def run(self, only=None, dry_run=False, no_store=False, progress=None, deep=1):
         """Scrape the selected sources.
 
         ``progress`` is an optional callable receiving dict events, so a UI
@@ -78,7 +90,7 @@ class Runner:
                     pass
 
         started = now_iso()
-        chosen = self.pick(only)
+        chosen = self.pick(only, deep=deep)
         if not chosen:
             print("No sources selected. Check config/sources.json (enabled flags) or --source id.")
             emit(type="done", found=0, kept=0, new=0, errors=["no sources selected"])
