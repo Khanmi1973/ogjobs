@@ -84,14 +84,20 @@ JS = """
 const rows=[...document.querySelectorAll('.job')];
 const q=document.getElementById('q'),src=document.getElementById('src'),
       cty=document.getElementById('cty'),onlynew=document.getElementById('onlynew'),
+      age=document.getElementById('age'),
       sortBy=document.getElementById('sortby'),count=document.getElementById('count');
 function apply(){
   const t=q.value.toLowerCase().trim(), s=src.value, c=cty.value, n=onlynew.checked;
+  const maxAge=age.value?+age.value:null;
   let shown=0;
   rows.forEach(r=>{
     const hay=r.dataset.hay;
+    // A job with no readable date is excluded once a date filter is active:
+    // we cannot claim it is recent.
+    const a=r.dataset.age===''?null:+r.dataset.age;
     const ok=(!t||hay.includes(t))&&(!s||r.dataset.company===s)&&
-             (!c||(r.dataset.countries||'').includes(c))&&(!n||r.dataset.new==='1');
+             (!c||(r.dataset.countries||'').includes(c))&&(!n||r.dataset.new==='1')&&
+             (maxAge===null||(a!==null&&a<=maxAge));
     r.style.display=ok?'':'none'; if(ok)shown++;
   });
   count.textContent=shown;
@@ -103,7 +109,7 @@ function sort(){
     : (b.dataset.date||'').localeCompare(a.dataset.date||''));
   rows.forEach(r=>box.appendChild(r));
 }
-[q,src,cty,onlynew].forEach(el=>el.addEventListener('input',apply));
+[q,src,cty,onlynew,age].forEach(el=>el.addEventListener('input',apply));
 sortBy.addEventListener('change',sort);
 document.querySelectorAll('.toggle').forEach(b=>b.addEventListener('click',
   ()=>b.closest('.job').classList.toggle('open')));
@@ -202,9 +208,9 @@ def _e(s):
 def date_label(job):
     """Human date for a job card.
 
-    Returns (text, iso_for_sorting, is_fresh). Falls back to the day we first
-    saw the advert when the site publishes no date, and says so, so the two are
-    never confused.
+    Returns (text, iso_for_sorting, age_in_days). Falls back to the day we
+    first saw the advert when the site publishes no date, and says so, so the
+    two are never confused. age_in_days is None when no date can be read.
     """
     from datetime import datetime, timezone
 
@@ -232,15 +238,15 @@ def date_label(job):
     if posted:
         text, days = pretty(posted)
         if text:
-            return "Posted " + text, posted[:10], (days is not None and days <= 7)
+            return "Posted " + text, posted[:10], days
 
     seen = (job.get("first_seen") or "")[:10]
     if seen:
         text, days = pretty(seen)
         if text:
             # No published date on the advert, so be explicit about what this is.
-            return "Found " + text, seen, (days is not None and days <= 7)
-    return "", "", False
+            return "Found " + text, seen, days
+    return "", "", None
 
 
 def build_html(jobs, meta=None, live=False):
@@ -286,6 +292,17 @@ def build_html(jobs, meta=None, live=False):
                         % (_e(c), _e(c), company_counts[c]) for c in companies)),
              '<select id="cty"><option value="">All countries</option>%s</select>'
              % "".join('<option>%s</option>' % _e(c) for c in countries),
+             '<select id="age" title="Uses the advert\'s posted date. Where a site '
+             'publishes no date, the day this tool first saw the job is used instead '
+             '(those cards say &quot;Found&quot; rather than &quot;Posted&quot;).">'
+             '<option value="">Any date</option>'
+             '<option value="1">Last 24 hours</option>'
+             '<option value="3">Last 3 days</option>'
+             '<option value="7">Last week</option>'
+             '<option value="14">Last 2 weeks</option>'
+             '<option value="30">Last month</option>'
+             '<option value="90">Last 3 months</option>'
+             '</select>',
              '<select id="sortby"><option value="score">Sort: best match</option>'
              '<option value="date">Sort: newest</option></select>',
              '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)">'
@@ -302,7 +319,8 @@ def build_html(jobs, meta=None, live=False):
         hay = " ".join([str(j.get(k, "")) for k in
                         ("title", "company", "location", "countries", "matched",
                          "department", "source", "description")]).lower()
-        date_text, date_iso, date_fresh = date_label(j)
+        date_text, date_iso, date_age = date_label(j)
+        date_fresh = date_age is not None and date_age <= 7
         is_new = bool(j.get("is_new") or j.get("_new"))
         chips = []
         if is_new:
@@ -317,7 +335,7 @@ def build_html(jobs, meta=None, live=False):
         snippet = re.sub(r"\n{2,}", "\n", (j.get("description") or ""))[:1400]
         parts.append(
             '<div class="job" data-source="%s" data-company="%s" data-countries="%s" '
-            'data-score="%s" data-date="%s" data-new="%d" data-hay="%s">'
+            'data-score="%s" data-date="%s" data-age="%s" data-new="%d" data-hay="%s">'
             '<span class="score">%s</span>'
             '<h2><a href="%s" target="_blank" rel="noopener">%s</a></h2>'
             '<div class="meta"><span><b>%s</b></span><span>%s</span>'
@@ -325,7 +343,8 @@ def build_html(jobs, meta=None, live=False):
             '<div class="chips">%s</div>%s</div>'
             % (_e(j.get("source")), _e(j.get("company") or j.get("source")),
                _e(j.get("countries")), _e(j.get("score")),
-               _e(date_iso), 1 if is_new else 0, _e(hay),
+               _e(date_iso), "" if date_age is None else date_age,
+               1 if is_new else 0, _e(hay),
                _e(j.get("score")), _e(j.get("url")), _e(j.get("title")),
                _e(j.get("company")), _e(j.get("location") or "location not stated"),
                " fresh" if date_fresh else "", _e(date_text),
