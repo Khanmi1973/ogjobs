@@ -9,6 +9,7 @@ which applicant tracking system (ATS) sits behind it and delegates to the right
 adapter. That is what lets this run against companies whose job board we have
 never seen before.
 """
+import json
 import re
 import urllib.parse
 
@@ -372,6 +373,140 @@ def oracle_orc(f, cfg):
         if len(reqs) < page_size or offset >= int(first.get("TotalJobsCount") or 0):
             break
     return out
+
+
+def _phenom_ddo(html_doc):
+    """Pull the phApp.ddo JSON blob out of a Phenom People career page."""
+    i = (html_doc or "").find("phApp.ddo")
+    if i < 0:
+        return None
+    start = html_doc.find("{", i)
+    if start < 0:
+        return None
+    depth = 0
+    for k in range(start, len(html_doc)):
+        ch = html_doc[k]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(html_doc[start:k + 1])
+                except ValueError:
+                    # Only a malformed blob is expected here. Anything else is
+                    # a real bug and should not be silently swallowed.
+                    return None
+    return None
+
+
+@adapter("phenom")
+def phenom(f, cfg):
+    """Phenom People career sites (ADNOC, KBR and many large employers).
+
+    The search page ships its first result set inside a phApp.ddo JSON blob,
+    and ?from=N pages through the rest server side - no private API needed.
+    """
+    base = cfg["base"].rstrip("/")
+    path = cfg.get("search_path", "/us/en/search-results")
+    page_size = int(cfg.get("page_size", 10))
+    max_pages = int(cfg.get("max_pages", 20))
+    queries = _listify(cfg, "queries") or [""]
+
+    out, seen = [], set()
+    for q in queries:
+        total = None
+        for page in range(max_pages):
+            offset = page * page_size
+            url = "%s%s?from=%d&s=1" % (base, path, offset)
+            if q:
+                url += "&keywords=" + urllib.parse.quote(q)
+            r = f.get(url)
+            if not r.ok:
+                break
+            ddo = _phenom_ddo(r.text)
+            block = (ddo or {}).get("eagerLoadRefineSearch") or {}
+            jobs = (block.get("data") or {}).get("jobs") or []
+            if not jobs:
+                break
+            if total is None:
+                total = int(block.get("totalHits") or 0)
+            for j in jobs:
+                jid = str(j.get("jobSeqNo") or j.get("jobId") or "")
+                if jid in seen:
+                    continue
+                seen.add(jid)
+                loc = (j.get("cityStateCountry") or j.get("location")
+                       or ", ".join([x for x in (j.get("city"), j.get("state"),
+                                                 j.get("country")) if x]))
+                url_job = j.get("applyUrl") or j.get("jobUrl") or ""
+                if not url_job:
+                    slug = re.sub(r"[^a-z0-9]+", "-", (j.get("title") or "").lower()).strip("-")
+                    url_job = "%s/us/en/job/%s/%s" % (base, jid, slug)
+                out.append(_mk(cfg, title=j.get("title", ""), location=loc,
+                               url=urllib.parse.urljoin(base, url_job),
+                               posted=j.get("postedDate") or j.get("dateCreated", ""),
+                               external_id=str(j.get("reqId") or jid),
+                               department=j.get("category") or "",
+                               contract_type=j.get("type") or "",
+                               description=j.get("descriptionTeaser") or ""))
+            offset += page_size
+            if len(jobs) < page_size or (total and offset >= total):
+                break
+    return out
+
+
+@adapter("zoho_recruit")
+def zoho_recruit(f, cfg):
+    """Zoho Recruit career sites (Q-Sourcing and many African agencies).
+
+    The visible list is drawn by JavaScript, but the same data is already in
+    the served HTML as an HTML-escaped JSON array, so one request gets
+    everything without touching a private API.
+    """
+    base = cfg.get("base") or "https://%s.zohorecruit.com" % cfg["company_id"]
+    base = base.rstrip("/")
+    path = cfg.get("path", "/jobs/Careers/")
+    r = f.get(base + path)
+    if not r.ok:
+        return []
+
+    raw = html_unescape_all(r.text)
+    out, seen = [], set()
+    for m in re.finditer(r"\{[^{}]*\"Job_Opening_Name\"[^{}]*\}", raw):
+        try:
+            j = json.loads(m.group(0))
+        except ValueError:
+            continue
+        jid = str(j.get("id") or "")
+        title = j.get("Posting_Title") or j.get("Job_Opening_Name") or ""
+        if not jid or not title or jid in seen:
+            continue
+        if j.get("Publish") is False:
+            continue
+        seen.add(jid)
+        loc = ", ".join([x for x in (j.get("City"), j.get("State"), j.get("Country")) if x])
+        slug = re.sub(r"[^A-Za-z0-9]+", "-", title).strip("-")
+        out.append(_mk(cfg, title=title, location=loc,
+                       url="%s%s%s/%s" % (base, path, jid, slug),
+                       external_id=jid,
+                       contract_type=j.get("Job_Type") or "",
+                       department=j.get("Industry") or j.get("Department_Name") or "",
+                       posted=j.get("Date_Opened") or ""))
+    _enrich_details(f, cfg, out)
+    return out
+
+
+def html_unescape_all(text):
+    """Undo the numeric entity escaping Zoho applies to its embedded JSON."""
+    import html as _h
+    prev = text
+    for _ in range(2):
+        cur = _h.unescape(prev)
+        if cur == prev:
+            break
+        prev = cur
+    return prev
 
 
 @adapter("vennture")

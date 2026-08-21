@@ -105,14 +105,12 @@
       "enabled": true
     },
     {
-      "_status": "NEEDS PROBE: qsourcing.com shows no job links in plain HTML. Find their live vacancies page in a browser, then: python -m ogjobs probe <that-url> --test",
+      "_verified": "Confirmed live: 161 jobs (Uganda, Kenya, Tanzania) via the Zoho Recruit career site. Jobs are embedded in the page as escaped JSON.",
       "id": "qsourcing",
       "company": "Q-Sourcing Servtec",
-      "adapter": "autodetect",
-      "careers_url": "https://qsourcing.com/",
-      "link_pattern": "/(job|vacanc|career)",
-      "max_details": 60,
-      "enabled": false
+      "adapter": "zoho_recruit",
+      "company_id": "qsourcing",
+      "enabled": true
     },
     {
       "_verified": "Confirmed live: 248 campaigns via the public BeeHire endpoint. Aldelia has no job list on its own website.",
@@ -174,12 +172,14 @@
       "enabled": false
     },
     {
-      "_status": "NEEDS PROBE FROM YOUR NETWORK: every ADNOC careers URL was blocked or 404 from here. Open careers.adnoc.ae in your browser, copy the URL you land on, then: python -m ogjobs probe <url> --test",
+      "_verified": "Confirmed live: Phenom People, 100 jobs, Abu Dhabi. Data ships inside the page's phApp.ddo blob; ?from=N pages through it server side.",
       "id": "adnoc",
       "company": "ADNOC",
-      "adapter": "autodetect",
-      "careers_url": "https://careers.adnoc.ae/",
-      "enabled": false
+      "adapter": "phenom",
+      "base": "https://jobs.adnoc.ae",
+      "search_path": "/us/en/search-results",
+      "max_pages": 12,
+      "enabled": true
     },
     {
       "_status": "NEEDS PROBE FROM YOUR NETWORK: blocked from here. Note QatarEnergy LNG (separate entry) IS working. Probe the parent company portal from your browser.",
@@ -362,6 +362,26 @@
         "https://jobs.seaowlgroup.com/"
       ],
       "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: Phenom People, 1670 jobs worldwide incl. Iraq. The keywords= filter is ignored server side, so we page through and let the geography filter select. max_pages 120 = 1200 jobs per run; raise it if you want the full set.",
+      "id": "kbr",
+      "company": "KBR",
+      "adapter": "phenom",
+      "base": "https://careers.kbr.com",
+      "search_path": "/us/en/search-results",
+      "max_pages": 120,
+      "enabled": true
+    },
+    {
+      "_status": "CANNOT SCRAPE - BLOCKED BY THE SITE OWNER, NOT A BUG. recruiting2.ultipro.com/robots.txt says 'Disallow: */JobBoardView', which is the only endpoint carrying the job data; the /JobBoard/ page itself is an empty JavaScript shell. This is an explicit instruction from the site operator, so ogjobs does not read it. Use the board manually in your browser, or their email alerts.",
+      "id": "hill_ultipro",
+      "company": "UltiPro job board (Hill)",
+      "adapter": "links",
+      "urls": [
+        "https://recruiting2.ultipro.com/HIL1010HIDC/JobBoard/d6b19ebf-299c-4e89-aaa6-bb9dd6df689c/"
+      ],
+      "enabled": false
     }
   ]
 }

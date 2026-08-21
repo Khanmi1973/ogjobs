@@ -22,6 +22,14 @@ COUNTRIES = {
                  " om,", "(om)"],
         "Bahrain": ["bahrain", "manama", "sitra", "riffa", " bh,", "(bh)"],
     },
+    "Middle East": {
+        "Iraq": ["iraq", "iraqi", "baghdad", "basra", "basrah", "erbil", "arbil",
+                 "sulaymaniyah", "duhok", "dohuk", "kurdistan", "kirkuk", "mosul",
+                 "rumaila", "zubair", "majnoon", "west qurna", "halfaya", "gharraf",
+                 "faihaa", "khor al zubair", "umm qasr", " iq,", "(iq)"],
+        "Yemen": ["yemen", "sanaa", "aden", "mukalla", " ye,", "(ye)"],
+        "Jordan": ["jordan", "amman", "aqaba", " jo,", "(jo)"],
+    },
     "Africa": {
         "Angola": ["angola", "luanda", "cabinda", "soyo", "lobito", "benguela", "malongo",
                    " ao,", "(ao)"],
@@ -39,10 +47,14 @@ COUNTRIES = {
         "Libya": ["libya", "tripoli", "benghazi", "misrata", "sirte", "mellitah", " ly,", "(ly)"],
         "Algeria": ["algeria", "algiers", "alger", "hassi messaoud", "hassi r'mel", "arzew",
                     "oran", "in amenas", " dz,", "(dz)"],
-        "Congo (Republic)": ["republic of congo", "congo-brazzaville", "brazzaville",
-                             "pointe noire", "pointe-noire", " cg,", "(cg)"],
-        "DR Congo": ["democratic republic of congo", "dr congo", "drc", "kinshasa",
-                     "lubumbashi", " cd,", "(cd)"],
+        # Bare "Congo" resolves to the Republic; detect() demotes it when the
+        # text actually names the DRC.
+        "Congo (Republic)": ["congo", "republic of congo", "congo-brazzaville",
+                             "brazzaville", "pointe noire", "pointe-noire",
+                             "djeno", "moho", "nkossa", " cg,", "(cg)"],
+        "DR Congo": ["democratic republic of congo", "dr congo", "drc", "d.r. congo",
+                     "congo-kinshasa", "kinshasa", "lubumbashi", "katanga",
+                     " cd,", "(cd)"],
         "Gabon": ["gabon", "libreville", "port gentil", "port-gentil", "gamba", " ga,", "(ga)"],
         "Equatorial Guinea": ["equatorial guinea", "malabo", "bata", "punta europa",
                               " gq,", "(gq)"],
@@ -149,6 +161,12 @@ def detect(*texts):
                 if region not in regions:
                     regions.append(region)
                 break
+
+    # "Kinshasa, DR Congo" also contains the word "congo", which would otherwise
+    # tag the job as Republic of the Congo as well. The DRC evidence is more
+    # specific, so it wins.
+    if "DR Congo" in countries and "Congo (Republic)" in countries:
+        countries.remove("Congo (Republic)")
 
     flags = []
     if any(_word(_norm(h), blob) for h in REMOTE_HINTS):
