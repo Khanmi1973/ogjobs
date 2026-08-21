@@ -30,7 +30,13 @@ CREATE TABLE IF NOT EXISTS jobs (
     last_seen     TEXT,
     applied       INTEGER DEFAULT 0,
     hidden        INTEGER DEFAULT 0,
-    notes         TEXT DEFAULT ''
+    notes         TEXT DEFAULT '',
+    -- Every scraped job is kept, passing or not, so that changing
+    -- config/filters.json can be re-applied with "ogjobs refilter"
+    -- instead of re-scraping every site. ("matched" above is the list of
+    -- matched keywords; "is_match" is the pass/fail verdict.)
+    is_match      INTEGER DEFAULT 1,
+    drop_reason   TEXT DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_score  ON jobs(score DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_seen   ON jobs(first_seen DESC);
@@ -49,7 +55,8 @@ CREATE TABLE IF NOT EXISTS runs (
 
 FIELDS = ["fingerprint", "source", "company", "title", "location", "url", "posted",
           "description", "department", "contract_type", "external_id", "countries",
-          "regions", "flags", "score", "matched", "first_seen", "last_seen"]
+          "regions", "flags", "score", "matched", "first_seen", "last_seen",
+          "is_match", "drop_reason"]
 
 
 class Store:
@@ -67,7 +74,16 @@ class Store:
         except sqlite3.Error:
             pass
         self.db.executescript(SCHEMA)
+        self._migrate()
         self.db.commit()
+
+    def _migrate(self):
+        """Add columns introduced after a database was first created."""
+        have = {r["name"] for r in self.db.execute("PRAGMA table_info(jobs)")}
+        for col, decl in (("is_match", "INTEGER DEFAULT 1"),
+                          ("drop_reason", "TEXT DEFAULT ''")):
+            if col not in have:
+                self.db.execute("ALTER TABLE jobs ADD COLUMN %s %s" % (col, decl))
 
     def close(self):
         self.db.commit()
@@ -119,9 +135,13 @@ class Store:
     # ---- reads ---------------------------------------------------------
 
     def query(self, since=None, min_score=None, source=None, country=None,
-              include_hidden=False, limit=1000, new_only=False):
+              include_hidden=False, limit=1000, new_only=False,
+              include_unmatched=False):
         sql = "SELECT * FROM jobs WHERE 1=1"
         args = []
+        if not include_unmatched:
+            # Non-matching jobs are stored for instant re-filtering, never shown.
+            sql += " AND COALESCE(is_match,1)=1"
         if not include_hidden:
             sql += " AND hidden=0"
         if since:
@@ -148,6 +168,7 @@ class Store:
 
     def stats(self):
         row = self.db.execute(
-            "SELECT COUNT(*) n, SUM(applied) applied, COUNT(DISTINCT source) srcs FROM jobs"
+            "SELECT COUNT(*) n, SUM(applied) applied, COUNT(DISTINCT source) srcs "
+            "FROM jobs WHERE COALESCE(is_match,1)=1"
         ).fetchone()
         return {"total": row["n"] or 0, "applied": row["applied"] or 0, "sources": row["srcs"] or 0}

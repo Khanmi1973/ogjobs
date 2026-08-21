@@ -34,6 +34,10 @@ class Job:
     first_seen: str = ""
     last_seen: str = ""
     is_new: bool = False
+    # Verdict from the filters. Non-matching jobs are still stored so that a
+    # filter change can be re-applied without re-scraping every site.
+    is_match: bool = True
+    drop_reason: str = ""
 
     def normalise(self):
         self.title = _clean(self.title)
@@ -61,6 +65,7 @@ class Job:
         for k in ("countries", "regions", "flags", "matched"):
             d[k] = ", ".join(d[k] or [])
         d["is_new"] = 1 if d["is_new"] else 0
+        d["is_match"] = 1 if d["is_match"] else 0
         return d
 
 

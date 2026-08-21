@@ -108,11 +108,14 @@ class Runner:
                     traceback.print_exc()
                 continue
 
-            kept, dropped = [], {}
+            kept, dropped, scanned = [], {}, []
             for job in raw:
                 if not job.title or not job.url:
                     continue
                 ok, reason = self.filters.evaluate(job)
+                job.is_match = ok
+                job.drop_reason = "" if ok else reason
+                scanned.append(job)
                 if ok:
                     kept.append(job)
                 else:
@@ -120,8 +123,12 @@ class Runner:
 
             new_here = 0
             if not (dry_run or no_store):
-                for job in kept:
-                    if self.store.upsert(job):
+                # Store everything, matching or not: that is what lets
+                # "ogjobs refilter" re-apply a changed filters.json instantly
+                # instead of re-scraping every site.
+                for job in scanned:
+                    was_new = self.store.upsert(job)
+                    if was_new and job.is_match:
                         new_here += 1
                 self.store.db.commit()
 
@@ -153,6 +160,43 @@ class Runner:
         return all_kept
 
     # ------------------------------------------------------------------
+
+    def refilter(self, progress=None):
+        """Re-apply config/filters.json to every stored job. No network.
+
+        Scraping discards nothing, so widening the filters (adding a country,
+        say) can be applied to jobs already collected instead of re-scraping
+        every site.
+        """
+        from .models import Job
+
+        rows = self.store.db.execute("SELECT * FROM jobs").fetchall()
+        promoted, demoted, unchanged = 0, 0, 0
+        for r in rows:
+            job = Job(source=r["source"] or "", company=r["company"] or "",
+                      title=r["title"] or "", location=r["location"] or "",
+                      url=r["url"] or "", posted=r["posted"] or "",
+                      description=r["description"] or "",
+                      department=r["department"] or "",
+                      contract_type=r["contract_type"] or "",
+                      external_id=r["external_id"] or "")
+            ok, reason = self.filters.evaluate(job)
+            was = 1 if (r["is_match"] if r["is_match"] is not None else 1) else 0
+            if ok and not was:
+                promoted += 1
+            elif was and not ok:
+                demoted += 1
+            else:
+                unchanged += 1
+            self.store.db.execute(
+                "UPDATE jobs SET is_match=?, drop_reason=?, score=?, matched=?, "
+                "countries=?, regions=?, flags=? WHERE fingerprint=?",
+                (1 if ok else 0, "" if ok else reason, job.score,
+                 ", ".join(job.matched), ", ".join(job.countries),
+                 ", ".join(job.regions), ", ".join(job.flags), r["fingerprint"]))
+        self.store.db.commit()
+        return {"total": len(rows), "now_matching": promoted,
+                "no_longer_matching": demoted, "unchanged": unchanged}
 
     def report(self, new_only=False, min_score=None, source=None, country=None,
                limit=1000, out_dir=None, hosted_url=None, index_name="jobs.html"):

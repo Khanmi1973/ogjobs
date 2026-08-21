@@ -44,6 +44,22 @@ def cmd_report(args):
     r.close()
 
 
+def cmd_refilter(args):
+    """Re-apply filters.json to jobs already collected - no scraping."""
+    r = Runner(verbose=False)
+    print("Re-applying config/filters.json to stored jobs...")
+    res = r.refilter()
+    print("  %d job(s) re-checked" % res["total"])
+    print("  %d now match that did not before" % res["now_matching"])
+    print("  %d no longer match" % res["no_longer_matching"])
+    if not args.no_report:
+        rows, paths = r.report()
+        print("\nReport rebuilt: %d job(s)" % len(rows))
+        for p_ in paths:
+            print("   %s" % p_)
+    r.close()
+
+
 def cmd_serve(args):
     from .server import serve
     serve(port=args.port, open_browser=not args.no_open,
@@ -225,6 +241,11 @@ def build_parser():
     rp.add_argument("--hosted-url",
                     help="GitHub Actions URL; adds a 'Refresh jobs' button for hosted pages")
     rp.set_defaults(func=cmd_report)
+
+    rf = sub.add_parser("refilter",
+                        help="re-apply filters.json to stored jobs without scraping")
+    rf.add_argument("--no-report", action="store_true")
+    rf.set_defaults(func=cmd_refilter)
 
     sv = sub.add_parser("serve", help="open the live dashboard with a Scan now button")
     sv.add_argument("--port", type=int, default=8765)
