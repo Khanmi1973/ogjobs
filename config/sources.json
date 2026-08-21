@@ -204,17 +204,30 @@
       "enabled": false
     },
     {
+      "_verified": "Confirmed live: Taleo/SelectMinds referral site. 37 jobs exist but pagination is JavaScript-driven - ?page=/offset=/startrow= are all ignored - so we sweep its four listing pages and reach ~22 unique jobs.",
       "id": "petrofac",
       "company": "Petrofac",
-      "adapter": "autodetect",
-      "careers_url": "https://www.petrofac.com/careers/vacancies/",
-      "enabled": false
+      "adapter": "links",
+      "urls": [
+        "https://petrofac.referrals.selectminds.com/jobs/search",
+        "https://petrofac.referrals.selectminds.com/latest-jobs",
+        "https://petrofac.referrals.selectminds.com/hot-jobs",
+        "https://petrofac.referrals.selectminds.com/jobs"
+      ],
+      "link_pattern": "/jobs/[a-z0-9-]+$",
+      "exclude_pattern": "other-jobs-matching",
+      "max_details": 60,
+      "enabled": true
     },
     {
+      "_status": "NOTHING TO SCRAPE RIGHT NOW - SAIPEM'S OWN NOTICE. jobs.saipem.com currently displays: 'List of positions under maintenance. For complete list of positions please refer to Linkedin Saipem SpA Page.' There is no job data on the site to read. Re-probe once they restore it: python -m ogjobs probe https://jobs.saipem.com/ --test",
       "id": "saipem",
       "company": "Saipem",
-      "adapter": "autodetect",
-      "careers_url": "https://www.saipem.com/en/careers/job-opportunities",
+      "adapter": "links",
+      "urls": [
+        "https://jobs.saipem.com/"
+      ],
+      "link_pattern": "/job",
       "enabled": false
     },
     {
@@ -382,6 +395,17 @@
         "https://recruiting2.ultipro.com/HIL1010HIDC/JobBoard/d6b19ebf-299c-4e89-aaa6-bb9dd6df689c/"
       ],
       "enabled": false
+    },
+    {
+      "_verified": "Confirmed live via the site's own RSS feed (20 most recent jobs). NOTE: SPIE's full board is an ASP.NET form - filtering by country needs a postback, so the 43 Africa roles it advertises (Angola 26, Congo 2, Gabon 1) are not reachable by URL. Running daily accumulates them as they are posted.",
+      "id": "spie",
+      "company": "SPIE",
+      "adapter": "rss",
+      "urls": [
+        "https://www.join.spie-job.com/handlers/offerRss.ashx?LCID=2057",
+        "https://www.join.spie-job.com/handlers/offerRss.ashx?LCID=1036"
+      ],
+      "enabled": true
     }
   ]
 }

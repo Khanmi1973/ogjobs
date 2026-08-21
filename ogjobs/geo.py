@@ -131,14 +131,33 @@ def _pad(s):
     return " " + s + " ,"
 
 
-def _word(needle, haystack):
-    """Whole-word containment. Alphanumeric boundaries only, so aliases that
-    end in punctuation (' ng,', '(ao)') still match."""
+_ISO_ALIAS = re.compile(r"^(?:\(?([a-z]{2})\)?),?$")
+
+
+def _word(needle, haystack, allow_iso=True):
+    """Whole-word containment.
+
+    Two-letter country codes are a special case. They are only meaningful in a
+    location field ("Luanda, AO, 50307"); in prose they are ordinary words -
+    French and Dutch "om," was matching Oman. So they must sit between commas,
+    and are ignored entirely when scanning descriptions (allow_iso=False).
+    """
+    iso = _ISO_ALIAS.match(needle)
+    if iso:
+        if not allow_iso:
+            return False
+        return re.search(r"(?:^|,)\s*%s\s*(?=,|$)" % re.escape(iso.group(1)),
+                         haystack) is not None
     return re.search(r"(?<![a-z0-9])%s(?![a-z0-9])" % re.escape(needle), haystack) is not None
 
 
-def detect(*texts):
-    """Return (countries, regions, flags) found across the supplied strings."""
+def detect(*texts, **kw):
+    """Return (countries, regions, flags) found across the supplied strings.
+
+    Pass allow_iso=False when scanning free text such as a job description,
+    so that two-letter country codes are not read out of ordinary prose.
+    """
+    allow_iso = kw.get("allow_iso", True)
     blob = _pad(_norm(" , ".join([t for t in texts if t])))
     countries, regions = [], []
     for region, table in COUNTRIES.items():
@@ -149,7 +168,7 @@ def detect(*texts):
                     continue
                 # Always match on word boundaries. Substring matching gave false
                 # positives such as Bonnyville (Canada) hitting Bonny (Nigeria).
-                if _word(n, blob):
+                if _word(n, blob, allow_iso):
                     if country not in countries:
                         countries.append(country)
                     if region not in regions:
@@ -176,10 +195,11 @@ def detect(*texts):
     return countries, regions, flags
 
 
-def detect_other(*texts):
+def detect_other(*texts, **kw):
     """True when the text clearly points at a country outside our targets."""
+    allow_iso = kw.get("allow_iso", True)
     blob = _pad(_norm(" , ".join([t for t in texts if t])))
-    return any(_word(_norm(h), blob) for h in NON_TARGET)
+    return any(_word(_norm(h), blob, allow_iso) for h in NON_TARGET)
 
 
 def all_countries():

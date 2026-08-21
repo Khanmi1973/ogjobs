@@ -56,8 +56,11 @@ class Filters:
             job.flags = loc_flags
             return job
 
+        # No usable location: fall back to title/description, but do not read
+        # two-letter country codes out of prose.
         countries, regions, flags = geo.detect(job.location, job.title,
-                                               job.description[:1500], job.url)
+                                               job.description[:1500], job.url,
+                                               allow_iso=False)
         job.countries, job.regions, job.flags = countries, regions, flags
         return job
 
