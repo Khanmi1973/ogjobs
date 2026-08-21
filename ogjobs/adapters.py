@@ -374,6 +374,118 @@ def oracle_orc(f, cfg):
     return out
 
 
+@adapter("vennture")
+def vennture(f, cfg):
+    """Vennture-built recruiter sites (NES Fircroft, Kintec Global, others).
+
+    The job-search listing is drawn by JavaScript, but every job detail page is
+    pre-rendered server side and the site publishes a sitemap at
+    /api/sitemap.xml. So: take the URLs from the sitemap, read each page.
+
+    Note the sitemap keeps expired jobs; those return a near-empty shell and
+    are skipped rather than stored as blank rows.
+    """
+    sitemap_url = cfg.get("sitemap") or (_origin(cfg.get("careers_url", "")) + "/api/sitemap.xml")
+    r = f.get(sitemap_url, accept="application/xml, text/xml, */*")
+    if not r.ok:
+        return []
+    keep = re.compile(cfg.get("url_pattern", r"/job/"), re.I)
+    skip = re.compile(cfg["exclude_pattern"], re.I) if cfg.get("exclude_pattern") else None
+
+    # Read <lastmod> alongside each URL so that when max_details caps the run we
+    # spend it on the newest postings rather than an arbitrary slice.
+    entries, seen = [], set()
+    for block in re.findall(r"<url>(.*?)</url>", r.text, re.S | re.I):
+        loc = re.search(r"<loc>\s*(.*?)\s*</loc>", block, re.S)
+        if not loc:
+            continue
+        u = loc.group(1)
+        if not keep.search(u) or (skip and skip.search(u)) or u in seen:
+            continue
+        seen.add(u)
+        mod = re.search(r"<lastmod>\s*(.*?)\s*</lastmod>", block, re.S)
+        entries.append((mod.group(1) if mod else "", u))
+    entries.sort(key=lambda e: e[0], reverse=True)
+    picked = [u for _, u in entries]
+
+    out = []
+    for u in picked[:int(cfg.get("max_details", 120))]:
+        d = f.get(u, cache_ttl=cfg.get("detail_ttl", 86400))
+        if not d.ok or len(d.text) < 2000:      # expired posting
+            continue
+        title = H.meta(d.text, "og:title") or ""
+        if not title:
+            m = re.search(r"<h1[^>]*>(.*?)</h1>", d.text, re.S | re.I)
+            title = H.strip_tags(m.group(1), keep_breaks=False) if m else ""
+        if not title:
+            continue
+        loc = re.search(r"icon location\"[^>]*></i>\s*<span[^>]*>(.*?)</span>", d.text, re.S | re.I)
+        ref = re.search(r"class=\"job-ref\"[^>]*>(.*?)</span>", d.text, re.S | re.I)
+        posted = re.search(r"Posted:\s*([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})", d.text)
+        jtype = re.search(r"class=\"job_type\"[^>]*>(.*?)</span>", d.text, re.S | re.I)
+        sector = re.search(r"class=\"media job_sector\"[^>]*>(.*?)</div>", d.text, re.S | re.I)
+        posted_iso = ""
+        if posted:                               # site writes DD/MM/YYYY
+            dd, mm, yy = posted.group(1).split("/")
+            posted_iso = "%s-%02d-%02d" % (yy, int(mm), int(dd))
+        out.append(_mk(cfg, title=title,
+                       url=u,
+                       location=H.strip_tags(loc.group(1), False) if loc else "",
+                       external_id=H.strip_tags(ref.group(1), False) if ref else "",
+                       posted=posted_iso,
+                       contract_type=H.strip_tags(jtype.group(1), False) if jtype else "",
+                       department=H.strip_tags(sector.group(1), False) if sector else "",
+                       description=H.meta(d.text, "og:description")))
+    return out
+
+
+@adapter("nicoka")
+def nicoka(f, cfg):
+    """Nicoka-hosted career sites (SEAOWL Group and others).
+
+    The whole vacancy list is server-rendered into one page, but the job links
+    are bare id-hash paths with no 'job' segment, so the generic link harvester
+    walks straight past them. Parsing the cards directly also gives us the
+    location for free, without fetching every detail page.
+    """
+    out, seen = [], set()
+    for url in _listify(cfg, "urls", "url", "careers_url"):
+        r = f.get(url)
+        if not r.ok:
+            continue
+        blocks = re.findall(r"<div class=\"job[ \"][^>]*>.*?(?=<div class=\"job[ \"]|</section>)",
+                            r.text, re.S | re.I)
+        for b in blocks:
+            m = re.search(r"class=\"job-title\"[^>]*>\s*<a[^>]+href=\"([^\"]+)\"[^>]*>(.*?)</a>",
+                          b, re.S | re.I)
+            if not m:
+                continue
+            job_url = urllib.parse.urljoin(r.url, m.group(1).strip().rstrip('"'))
+            title = H.strip_tags(m.group(2), keep_breaks=False)
+            if not title or job_url in seen:
+                continue
+            seen.add(job_url)
+            loc = re.search(r"job-info-location[^>]*>(.*?)</li>", b, re.S | re.I)
+            country = re.search(r"job-info-country[^>]*>(.*?)</li>", b, re.S | re.I)
+            parts = [H.strip_tags(x.group(1), keep_breaks=False).strip(" ,")
+                     for x in (loc, country) if x]
+            # The location line often reads ", , Uganda" and the country is then
+            # repeated on its own line, giving "Port-Gentil, Gabon, Gabon".
+            parts = [re.sub(r"\s*,\s*(,\s*)*", ", ", p).strip(" ,") for p in parts if p]
+            uniq = []
+            for p in parts:
+                if not p:
+                    continue
+                low = p.lower()
+                if any(low == u.lower() or low in u.lower() for u in uniq):
+                    continue
+                uniq = [u for u in uniq if u.lower() not in low]
+                uniq.append(p)
+            out.append(_mk(cfg, title=title, url=job_url, location=", ".join(uniq)))
+    _enrich_details(f, cfg, out)
+    return out
+
+
 # --------------------------------------------------------------------------
 # Generic adapters - work on almost any career site
 # --------------------------------------------------------------------------

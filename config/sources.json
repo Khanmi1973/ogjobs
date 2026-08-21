@@ -105,14 +105,6 @@
       "enabled": true
     },
     {
-      "id": "saeowl",
-      "company": "SAEOWL",
-      "adapter": "autodetect",
-      "careers_url": "https://saeowl.com/careers/",
-      "link_pattern": "(career|job|vacanc|position)",
-      "enabled": true
-    },
-    {
       "_status": "NEEDS PROBE: qsourcing.com shows no job links in plain HTML. Find their live vacancies page in a browser, then: python -m ogjobs probe <that-url> --test",
       "id": "qsourcing",
       "company": "Q-Sourcing Servtec",
@@ -131,15 +123,15 @@
       "enabled": true
     },
     {
-      "_status": "NEEDS WORK: the site renders jobs with JavaScript - job pages return an empty 81-byte shell to any non-browser client, so nothing can be read. Its sitemap does list 584 job URLs (https://www.nesfircroft.com/api/sitemap.xml) if a future workaround appears. Use their free email job alerts meanwhile.",
+      "_verified": "Confirmed live: 584 jobs in the sitemap, detail pages pre-rendered server side. Sorted newest-first via <lastmod>; max_details caps how many are read per run.",
       "id": "nesfircroft",
       "company": "NES Fircroft",
-      "adapter": "sitemap",
-      "url": "https://www.nesfircroft.com/api/sitemap.xml",
+      "adapter": "vennture",
+      "careers_url": "https://www.nesfircroft.com/",
       "url_pattern": "/job/",
       "exclude_pattern": "/de/",
-      "max_details": 60,
-      "enabled": false
+      "max_details": 180,
+      "enabled": true
     },
     {
       "_verified": "Website pagination is JavaScript-driven, but the sitemap lists every job URL and robots.txt permits /jobs/.",
@@ -336,14 +328,14 @@
       "enabled": true
     },
     {
-      "_status": "NEEDS PROBE: correct company is Kintec Global Recruitment at kintecglobal.com (kintec.net is a footwear shop). Vacancies page not found in plain HTML - probe the real one.",
+      "_verified": "Confirmed live: 296 jobs in the sitemap, same Vennture platform as NES Fircroft. NOTE kintec.net is an unrelated footwear shop - the recruiter is kintecglobal.com.",
       "id": "kintec",
       "company": "Kintec Global",
-      "adapter": "autodetect",
+      "adapter": "vennture",
       "careers_url": "https://www.kintecglobal.com/",
-      "link_pattern": "/(job|vacanc)",
-      "max_details": 60,
-      "enabled": false
+      "url_pattern": "/job/",
+      "max_details": 140,
+      "enabled": true
     },
     {
       "_status": "NEEDS PROBE: kentz.com does not resolve. Kentz was absorbed into SNC-Lavalin, now AtkinsRealis - their jobs are at careers.atkinsrealis.com. Probe that, or drop this entry.",
@@ -360,6 +352,16 @@
       "adapter": "autodetect",
       "careers_url": "https://www.alsglobal.com/en/careers",
       "enabled": false
+    },
+    {
+      "_verified": "Confirmed live: 26 jobs incl. Uganda, Gabon, Tanzania. Platform is Nicoka; job URLs are bare id-hashes with no 'job' path, which is why generic link harvesting missed them.",
+      "id": "seaowl",
+      "company": "SEAOWL Group",
+      "adapter": "nicoka",
+      "urls": [
+        "https://jobs.seaowlgroup.com/"
+      ],
+      "enabled": true
     }
   ]
 }
