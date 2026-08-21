@@ -249,7 +249,7 @@ class Handler(BaseHTTPRequestHandler):
     def _dashboard(self):
         runner = Runner(verbose=False)
         try:
-            rows = runner.store.query(limit=2000)
+            rows = runner.store.query(limit=20000)
             last = runner.store.last_run_started()
             for r in rows:
                 r["_new"] = bool(last and r.get("first_seen", "") >= last)

@@ -199,7 +199,7 @@ class Runner:
                 "no_longer_matching": demoted, "unchanged": unchanged}
 
     def report(self, new_only=False, min_score=None, source=None, country=None,
-               limit=1000, out_dir=None, hosted_url=None, index_name="jobs.html"):
+               limit=20000, out_dir=None, hosted_url=None, index_name="jobs.html"):
         """Write the HTML/CSV/RSS report.
 
         ``out_dir`` overrides the default data/reports (GitHub Pages publishes

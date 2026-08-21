@@ -30,6 +30,8 @@ margin-bottom:10px;box-shadow:var(--shadow)}
 .job h2 a{color:var(--fg);text-decoration:none}
 .job h2 a:hover{color:var(--accent);text-decoration:underline}
 .meta{color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:8px}
+.when{white-space:nowrap}
+.when.fresh{color:var(--accent);font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
 .chip.new{background:var(--new-soft);color:var(--new)}
@@ -88,7 +90,7 @@ function apply(){
   let shown=0;
   rows.forEach(r=>{
     const hay=r.dataset.hay;
-    const ok=(!t||hay.includes(t))&&(!s||r.dataset.source===s)&&
+    const ok=(!t||hay.includes(t))&&(!s||r.dataset.company===s)&&
              (!c||(r.dataset.countries||'').includes(c))&&(!n||r.dataset.new==='1');
     r.style.display=ok?'':'none'; if(ok)shown++;
   });
@@ -197,6 +199,50 @@ def _e(s):
     return html.escape(str(s or ""))
 
 
+def date_label(job):
+    """Human date for a job card.
+
+    Returns (text, iso_for_sorting, is_fresh). Falls back to the day we first
+    saw the advert when the site publishes no date, and says so, so the two are
+    never confused.
+    """
+    from datetime import datetime, timezone
+
+    def pretty(iso):
+        try:
+            d = datetime.strptime(iso[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except Exception:
+            return None, None
+        days = (datetime.now(timezone.utc) - d).days
+        if days <= 0:
+            ago = "today"
+        elif days == 1:
+            ago = "yesterday"
+        elif days < 7:
+            ago = "%d days ago" % days
+        elif days < 14:
+            ago = "1 week ago"
+        elif days < 61:
+            ago = "%d weeks ago" % (days // 7)
+        else:
+            ago = "%d months ago" % (days // 30)
+        return "%s (%s)" % (d.strftime("%d %b %Y"), ago), days
+
+    posted = (job.get("posted") or "").strip()
+    if posted:
+        text, days = pretty(posted)
+        if text:
+            return "Posted " + text, posted[:10], (days is not None and days <= 7)
+
+    seen = (job.get("first_seen") or "")[:10]
+    if seen:
+        text, days = pretty(seen)
+        if text:
+            # No published date on the advert, so be explicit about what this is.
+            return "Found " + text, seen, (days is not None and days <= 7)
+    return "", "", False
+
+
 def build_html(jobs, meta=None, live=False):
     """Render the dashboard.
 
@@ -206,6 +252,14 @@ def build_html(jobs, meta=None, live=False):
     """
     meta = meta or {}
     sources = sorted({j.get("source", "") for j in jobs if j.get("source")})
+    # The picker shows company names ("Saipem"), not internal ids ("saipem"),
+    # with a count so it is obvious which employers are represented.
+    company_counts = {}
+    for j in jobs:
+        name = (j.get("company") or j.get("source") or "").strip()
+        if name:
+            company_counts[name] = company_counts.get(name, 0) + 1
+    companies = sorted(company_counts, key=lambda n: (-company_counts[n], n.lower()))
     countries = sorted({c.strip() for j in jobs for c in (j.get("countries") or "").split(",")
                         if c.strip()})
     new_count = sum(1 for j in jobs if j.get("is_new") or j.get("_new"))
@@ -226,8 +280,10 @@ def build_html(jobs, meta=None, live=False):
                     if meta.get("hosted_url") else "")),
              '<div class="controls">',
              '<input type="search" id="q" placeholder="Search title, company, location, keyword...">',
-             '<select id="src"><option value="">All companies</option>%s</select>'
-             % "".join('<option>%s</option>' % _e(s) for s in sources),
+             '<select id="src"><option value="">All companies (%d)</option>%s</select>'
+             % (len(companies),
+                "".join('<option value="%s">%s (%d)</option>'
+                        % (_e(c), _e(c), company_counts[c]) for c in companies)),
              '<select id="cty"><option value="">All countries</option>%s</select>'
              % "".join('<option>%s</option>' % _e(c) for c in countries),
              '<select id="sortby"><option value="score">Sort: best match</option>'
@@ -246,6 +302,7 @@ def build_html(jobs, meta=None, live=False):
         hay = " ".join([str(j.get(k, "")) for k in
                         ("title", "company", "location", "countries", "matched",
                          "department", "source", "description")]).lower()
+        date_text, date_iso, date_fresh = date_label(j)
         is_new = bool(j.get("is_new") or j.get("_new"))
         chips = []
         if is_new:
@@ -259,17 +316,19 @@ def build_html(jobs, meta=None, live=False):
                 chips.append('<span class="chip plain">%s</span>' % _e(m))
         snippet = re.sub(r"\n{2,}", "\n", (j.get("description") or ""))[:1400]
         parts.append(
-            '<div class="job" data-source="%s" data-countries="%s" data-score="%s" '
-            'data-date="%s" data-new="%d" data-hay="%s">'
+            '<div class="job" data-source="%s" data-company="%s" data-countries="%s" '
+            'data-score="%s" data-date="%s" data-new="%d" data-hay="%s">'
             '<span class="score">%s</span>'
             '<h2><a href="%s" target="_blank" rel="noopener">%s</a></h2>'
-            '<div class="meta"><span><b>%s</b></span><span>%s</span><span>%s</span>%s</div>'
+            '<div class="meta"><span><b>%s</b></span><span>%s</span>'
+            '<span class="when%s">%s</span>%s</div>'
             '<div class="chips">%s</div>%s</div>'
-            % (_e(j.get("source")), _e(j.get("countries")), _e(j.get("score")),
-               _e(j.get("posted") or j.get("first_seen", "")[:10]), 1 if is_new else 0, _e(hay),
+            % (_e(j.get("source")), _e(j.get("company") or j.get("source")),
+               _e(j.get("countries")), _e(j.get("score")),
+               _e(date_iso), 1 if is_new else 0, _e(hay),
                _e(j.get("score")), _e(j.get("url")), _e(j.get("title")),
                _e(j.get("company")), _e(j.get("location") or "location not stated"),
-               _e(j.get("posted") or ""),
+               " fresh" if date_fresh else "", _e(date_text),
                ('<span>%s</span>' % _e(j.get("department"))) if j.get("department") else "",
                "".join(chips),
                ('<button class="toggle">description</button><div class="snippet">%s</div>' % _e(snippet))

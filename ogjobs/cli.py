@@ -232,7 +232,7 @@ def build_parser():
     rp.add_argument("--min-score", type=int, default=None)
     rp.add_argument("--source", "-s", action="append")
     rp.add_argument("--country", "-c")
-    rp.add_argument("--limit", type=int, default=1000)
+    rp.add_argument("--limit", type=int, default=20000)
     rp.add_argument("--top", type=int, default=10, help="how many to print to the console")
     rp.add_argument("--open", action="store_true")
     rp.add_argument("--out-dir", help="write the report here instead of data/reports")
