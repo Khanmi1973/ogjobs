@@ -327,20 +327,38 @@ def beehire(f, cfg):
     return out
 
 
+def _orc_requisitions(container):
+    """Pull the job list out of an Oracle response.
+
+    Tenants differ: some return requisitionList as a plain array, others wrap
+    it in a paging object {"items": [...], "count": n}.
+    """
+    rl = container.get("requisitionList")
+    if isinstance(rl, dict):
+        rl = rl.get("items")
+    if not isinstance(rl, list):
+        return []
+    return [r for r in rl if isinstance(r, dict)]
+
+
 @adapter("oracle_orc")
 def oracle_orc(f, cfg):
-    """Oracle Recruiting Cloud - used by a lot of Gulf national oil companies."""
+    """Oracle Recruiting Cloud - Eni, Wood, and many Gulf national oil companies."""
     host = cfg["host"].replace("https://", "").strip("/")
     site = cfg["site"]
+    page_size = int(cfg.get("page_size", 100))
     out, offset = [], 0
     for _ in range(int(cfg.get("max_pages", 8))):
         url = ("https://%s/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
-               "?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values"
-               "&finder=findReqs;siteNumber=%s,limit=200,offset=%d,sortBy=POSTING_DATES_DESC"
-               % (host, site, offset))
+               "?onlyData=true&expand=requisitionList"
+               "&finder=findReqs;siteNumber=%s,limit=%d,offset=%d,sortBy=POSTING_DATES_DESC"
+               % (host, site, page_size, offset))
         d = f.get_json(url, headers={"REST-Framework-Version": "4"})
         items = (d or {}).get("items") or []
-        reqs = items[0].get("requisitionList", []) if items else []
+        # Some tenants answer with an error payload whose "items" are strings,
+        # so never assume the first element is the requisition container.
+        first = items[0] if items and isinstance(items[0], dict) else {}
+        reqs = _orc_requisitions(first)
         if not reqs:
             break
         for j in reqs:
@@ -350,8 +368,8 @@ def oracle_orc(f, cfg):
                                % (host, site, j.get("Id", "")),
                            posted=j.get("PostedDate", ""), external_id=str(j.get("Id", "")),
                            contract_type=j.get("JobFunction", "")))
-        offset += 200
-        if items and offset >= int(items[0].get("TotalJobsCount") or 0):
+        offset += page_size
+        if len(reqs) < page_size or offset >= int(first.get("TotalJobsCount") or 0):
             break
     return out
 
@@ -691,7 +709,16 @@ def derive_config(url, html_doc, base_cfg=None):
     elif ats == "ashby" and m:
         cfg.update({"adapter": "ashby", "company_id": m.group(1)})
     elif ats == "oracle_orc" and m:
-        cfg.update({"adapter": "oracle_orc", "host": m.group(1), "site": m.group(2)})
+        # The careers URL is usually a vanity domain that does NOT serve the
+        # REST API; the real Fusion host is named inside the page.
+        host, site = m.group(1), m.group(2)
+        fusion = re.search(r"[a-z0-9\-]+\.fa\.[a-z0-9]+\.oraclecloud\.com", html_doc or "", re.I)
+        if fusion:
+            host = fusion.group(0)
+        site_hint = re.search(r"siteNumber[=\"':\s]+([A-Za-z0-9_\-]+)", html_doc or "")
+        if site_hint:
+            site = site_hint.group(1)
+        cfg.update({"adapter": "oracle_orc", "host": host, "site": site})
     elif ats == "beehire" and m:
         cfg.update({"adapter": "beehire", "company_id": m.group(1)})
     elif ats == "successfactors":

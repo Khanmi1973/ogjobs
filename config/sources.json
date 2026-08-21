@@ -78,10 +78,13 @@
       "enabled": true
     },
     {
+      "_verified": "Confirmed live: Oracle Recruiting Cloud, 100 jobs. jobs.eni.com is only the shop window - the API lives on the Fusion host below.",
       "id": "eni",
       "company": "Eni",
-      "adapter": "autodetect",
-      "careers_url": "https://jobs.eni.com/",
+      "adapter": "oracle_orc",
+      "host": "fa-evkm-saasfaprod1.fa.ocs.oraclecloud.com",
+      "site": "CX_1004",
+      "max_pages": 6,
       "enabled": true
     },
     {
@@ -110,14 +113,14 @@
       "enabled": true
     },
     {
+      "_status": "NEEDS PROBE: qsourcing.com shows no job links in plain HTML. Find their live vacancies page in a browser, then: python -m ogjobs probe <that-url> --test",
       "id": "qsourcing",
       "company": "Q-Sourcing Servtec",
       "adapter": "autodetect",
-      "careers_url": "https://qsourcingservtec.com/jobs/",
-      "link_pattern": "/(job|jobs|vacanc)",
-      "max_pages": 5,
-      "max_details": 80,
-      "enabled": true
+      "careers_url": "https://qsourcing.com/",
+      "link_pattern": "/(job|vacanc|career)",
+      "max_details": 60,
+      "enabled": false
     },
     {
       "_verified": "Confirmed live: 248 campaigns via the public BeeHire endpoint. Aldelia has no job list on its own website.",
@@ -128,24 +131,15 @@
       "enabled": true
     },
     {
-      "id": "trunorth",
-      "company": "TruNorth Africa",
-      "adapter": "autodetect",
-      "careers_url": "https://trunorthafrica.com/careers/",
-      "link_pattern": "(job|vacanc|career|opportunit)",
-      "max_details": 60,
-      "enabled": true
-    },
-    {
+      "_status": "NEEDS WORK: the site renders jobs with JavaScript - job pages return an empty 81-byte shell to any non-browser client, so nothing can be read. Its sitemap does list 584 job URLs (https://www.nesfircroft.com/api/sitemap.xml) if a future workaround appears. Use their free email job alerts meanwhile.",
       "id": "nesfircroft",
       "company": "NES Fircroft",
-      "adapter": "autodetect",
-      "careers_url": "https://www.nesfircroft.com/jobs",
-      "link_pattern": "/jobs/",
-      "exclude_pattern": "/jobs/?$|/job-alerts|/disciplines|/sectors",
-      "max_pages": 6,
-      "max_details": 90,
-      "enabled": true
+      "adapter": "sitemap",
+      "url": "https://www.nesfircroft.com/api/sitemap.xml",
+      "url_pattern": "/job/",
+      "exclude_pattern": "/de/",
+      "max_details": 60,
+      "enabled": false
     },
     {
       "_verified": "Website pagination is JavaScript-driven, but the sitemap lists every job URL and robots.txt permits /jobs/.",
@@ -188,7 +182,7 @@
       "enabled": false
     },
     {
-      "_group": "Operators and EPC/service majors. Enable in batches - each adds a minute or two.",
+      "_status": "NEEDS PROBE FROM YOUR NETWORK: every ADNOC careers URL was blocked or 404 from here. Open careers.adnoc.ae in your browser, copy the URL you land on, then: python -m ogjobs probe <url> --test",
       "id": "adnoc",
       "company": "ADNOC",
       "adapter": "autodetect",
@@ -196,6 +190,7 @@
       "enabled": false
     },
     {
+      "_status": "NEEDS PROBE FROM YOUR NETWORK: blocked from here. Note QatarEnergy LNG (separate entry) IS working. Probe the parent company portal from your browser.",
       "id": "qatarenergy",
       "company": "QatarEnergy",
       "adapter": "autodetect",
@@ -245,11 +240,14 @@
       "enabled": false
     },
     {
+      "_verified": "Confirmed live: Oracle Recruiting Cloud, 200 jobs, heavily GCC (Abu Dhabi, Al-Khobar, Saudi).",
       "id": "wood",
       "company": "Wood",
-      "adapter": "autodetect",
-      "careers_url": "https://www.woodplc.com/careers/job-search",
-      "enabled": false
+      "adapter": "oracle_orc",
+      "host": "ehif.fa.em2.oraclecloud.com",
+      "site": "CX_1",
+      "max_pages": 8,
+      "enabled": true
     },
     {
       "id": "bakerhughes",
@@ -298,6 +296,69 @@
       "company": "Sonangol",
       "adapter": "autodetect",
       "careers_url": "https://www.sonangol.co.ao/",
+      "enabled": false
+    },
+    {
+      "_verified": "Confirmed live: SuccessFactors, 23 jobs, all Ras Laffan Qatar.",
+      "id": "qatarenergylng",
+      "company": "QatarEnergy LNG",
+      "adapter": "successfactors",
+      "base": "https://careers.qatarenergylng.qa",
+      "queries": [
+        "",
+        "Qatar",
+        "Ras Laffan"
+      ],
+      "max_pages": 6,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: 59 job pages. NOTE domain is trUEnorthafrica.com (was wrong before).",
+      "id": "truenorth",
+      "company": "TrueNorth Africa",
+      "adapter": "links",
+      "urls": [
+        "https://truenorthafrica.com/list-of-jobs/"
+      ],
+      "link_pattern": "/job/",
+      "exclude_pattern": "/job_category/",
+      "max_details": 80,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: WordPress job sitemap, 49 jobs, each page carries schema.org JobPosting.",
+      "id": "wtsenergy",
+      "company": "WTS Energy",
+      "adapter": "sitemap",
+      "url": "https://www.wtsenergy.com/job_listing-sitemap.xml",
+      "url_pattern": "/job/",
+      "max_details": 80,
+      "enabled": true
+    },
+    {
+      "_status": "NEEDS PROBE: correct company is Kintec Global Recruitment at kintecglobal.com (kintec.net is a footwear shop). Vacancies page not found in plain HTML - probe the real one.",
+      "id": "kintec",
+      "company": "Kintec Global",
+      "adapter": "autodetect",
+      "careers_url": "https://www.kintecglobal.com/",
+      "link_pattern": "/(job|vacanc)",
+      "max_details": 60,
+      "enabled": false
+    },
+    {
+      "_status": "NEEDS PROBE: kentz.com does not resolve. Kentz was absorbed into SNC-Lavalin, now AtkinsRealis - their jobs are at careers.atkinsrealis.com. Probe that, or drop this entry.",
+      "id": "kentz",
+      "company": "Kentz (now AtkinsRealis)",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.atkinsrealis.com/",
+      "enabled": false
+    },
+    {
+      "_status": "NEEDS PROBE: careers.alsglobal.com did not resolve from here. Find the ALS careers page in your browser and probe it.",
+      "id": "als",
+      "company": "ALS",
+      "adapter": "autodetect",
+      "careers_url": "https://www.alsglobal.com/en/careers",
       "enabled": false
     }
   ]

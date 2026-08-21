@@ -25,7 +25,12 @@ def strip_tags(fragment, keep_breaks=True):
         txt = re.sub(r"(?i)</(p|div|li|tr|h[1-6])>", "\n", txt)
         txt = re.sub(r"(?i)<li[^>]*>", "- ", txt)
     txt = _TAG.sub(" ", txt)
-    txt = _html.unescape(txt)
+    # Some feeds double-encode ("&amp;#8211;"), so unescape until it settles.
+    for _ in range(3):
+        new = _html.unescape(txt)
+        if new == txt:
+            break
+        txt = new
     txt = _WS.sub(" ", txt)
     txt = "\n".join(line.strip() for line in txt.split("\n"))
     return _MULTINL.sub("\n\n", txt).strip()

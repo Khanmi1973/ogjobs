@@ -59,6 +59,10 @@ class Fetcher:
         # When true every request skips the cache, however long the caller's
         # requested TTL is. Used by "scan fresh" from the dashboard.
         self.force_fresh = False
+        # Hosts allowed to skip certificate verification. Some corporate career
+        # portals serve an incomplete chain; this keeps the exception scoped to
+        # that one host instead of disabling TLS checks everywhere.
+        self.insecure_hosts = set()
         self._last_hit = {}
         self._robots = {}
         os.makedirs(cache_dir, exist_ok=True)
@@ -67,10 +71,23 @@ class Fetcher:
         if not verify_ssl:
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
+        self._cookies = CookieJar()
         self._opener = urllib.request.build_opener(
             urllib.request.HTTPSHandler(context=ctx),
-            urllib.request.HTTPCookieProcessor(CookieJar()),
+            urllib.request.HTTPCookieProcessor(self._cookies),
         )
+
+        unverified = ssl.create_default_context()
+        unverified.check_hostname = False
+        unverified.verify_mode = ssl.CERT_NONE
+        self._insecure_opener = urllib.request.build_opener(
+            urllib.request.HTTPSHandler(context=unverified),
+            urllib.request.HTTPCookieProcessor(self._cookies),
+        )
+
+    def _opener_for(self, url):
+        host = urllib.parse.urlsplit(url).netloc.split(":")[0].lower()
+        return self._insecure_opener if host in self.insecure_hosts else self._opener
 
     # ---------------- public API ----------------
 
@@ -147,7 +164,8 @@ class Fetcher:
             try:
                 req = urllib.request.Request(root + "/robots.txt",
                                              headers={"User-Agent": self.user_agent})
-                raw = self._opener.open(req, timeout=self.timeout).read().decode("utf-8", "ignore")
+                raw = self._opener_for(url).open(
+                    req, timeout=self.timeout).read().decode("utf-8", "ignore")
                 rp.parse(raw.splitlines())
             except Exception:
                 rp = None
@@ -212,7 +230,7 @@ class Fetcher:
             self._throttle(url)
             try:
                 req = urllib.request.Request(url, data=body, headers=h, method=method)
-                raw_resp = self._opener.open(req, timeout=self.timeout)
+                raw_resp = self._opener_for(url).open(req, timeout=self.timeout)
                 resp_headers = self._norm_headers(raw_resp.headers)
                 text = self._decode(raw_resp.read(), resp_headers)
                 out = Response(raw_resp.geturl(), raw_resp.status, text, resp_headers)

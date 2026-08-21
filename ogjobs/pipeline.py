@@ -45,6 +45,11 @@ class Runner:
         )
         # "Scan fresh" from the dashboard bypasses the HTTP cache entirely.
         self.fetcher.force_fresh = bool(fresh)
+        # A source may declare "insecure_hosts" when its portal serves a broken
+        # certificate chain; the exception stays scoped to those hosts.
+        for s in self.sources:
+            for h in (s.get("insecure_hosts") or []):
+                self.fetcher.insecure_hosts.add(str(h).lower())
         self.store = Store(os.path.join(self.data_dir, "jobs.db"))
 
     # ------------------------------------------------------------------
