@@ -1,0 +1,304 @@
+{
+  "_comment": "Each entry is one employer or recruiter. 'autodetect' works out the applicant tracking system at run time and picks the right reader. If a source returns 0 jobs, run:  python -m ogjobs probe <careers-url> --test",
+  "sources": [
+    {
+      "_verified": "Confirmed live: Workday tenant 'shell', site 'shellcareers'.",
+      "id": "shell",
+      "company": "Shell",
+      "adapter": "workday",
+      "host": "shell.wd3.myworkdayjobs.com",
+      "tenant": "shell",
+      "site": "shellcareers",
+      "queries": [
+        "",
+        "Nigeria",
+        "Oman",
+        "Qatar",
+        "Egypt",
+        "Angola",
+        "Mozambique",
+        "Kazakhstan"
+      ],
+      "max_pages": 12,
+      "detail": false,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: SAP SuccessFactors career site.",
+      "id": "exxonmobil",
+      "company": "ExxonMobil",
+      "adapter": "successfactors",
+      "base": "https://jobs.exxonmobil.com",
+      "queries": [
+        "",
+        "Guyana",
+        "Nigeria",
+        "Angola",
+        "Qatar",
+        "UAE",
+        "Mozambique"
+      ],
+      "max_pages": 8,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: Avature board at jobs.totalenergies.com, paginated by jobOffset (25/page).",
+      "id": "totalenergies",
+      "company": "TotalEnergies",
+      "adapter": "links",
+      "urls": [
+        "https://jobs.totalenergies.com/en_US/careers/SearchJobs/?jobOffset={offset}"
+      ],
+      "link_pattern": "/careers/JobDetail/",
+      "page_step": 25,
+      "page_start": 0,
+      "max_pages": 8,
+      "max_details": 120,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: Workday tenant 'bpinternational', site 'bpCareers' (300 jobs returned).",
+      "id": "bp",
+      "company": "bp",
+      "adapter": "workday",
+      "host": "bpinternational.wd3.myworkdayjobs.com",
+      "tenant": "bpinternational",
+      "site": "bpCareers",
+      "queries": [
+        "",
+        "Angola",
+        "Oman",
+        "UAE",
+        "Egypt",
+        "Iraq",
+        "Mauritania",
+        "Senegal"
+      ],
+      "max_pages": 20,
+      "enabled": true
+    },
+    {
+      "id": "eni",
+      "company": "Eni",
+      "adapter": "autodetect",
+      "careers_url": "https://jobs.eni.com/",
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: SAP SuccessFactors career site.",
+      "id": "sbmoffshore",
+      "company": "SBM Offshore",
+      "adapter": "successfactors",
+      "base": "https://careers.sbmoffshore.com",
+      "queries": [
+        "",
+        "Angola",
+        "Guyana",
+        "Brazil",
+        "Nigeria",
+        "Mozambique"
+      ],
+      "max_pages": 8,
+      "enabled": true
+    },
+    {
+      "id": "saeowl",
+      "company": "SAEOWL",
+      "adapter": "autodetect",
+      "careers_url": "https://saeowl.com/careers/",
+      "link_pattern": "(career|job|vacanc|position)",
+      "enabled": true
+    },
+    {
+      "id": "qsourcing",
+      "company": "Q-Sourcing Servtec",
+      "adapter": "autodetect",
+      "careers_url": "https://qsourcingservtec.com/jobs/",
+      "link_pattern": "/(job|jobs|vacanc)",
+      "max_pages": 5,
+      "max_details": 80,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: 248 campaigns via the public BeeHire endpoint. Aldelia has no job list on its own website.",
+      "id": "aldelia",
+      "company": "Aldelia",
+      "adapter": "beehire",
+      "company_id": "aldelia",
+      "enabled": true
+    },
+    {
+      "id": "trunorth",
+      "company": "TruNorth Africa",
+      "adapter": "autodetect",
+      "careers_url": "https://trunorthafrica.com/careers/",
+      "link_pattern": "(job|vacanc|career|opportunit)",
+      "max_details": 60,
+      "enabled": true
+    },
+    {
+      "id": "nesfircroft",
+      "company": "NES Fircroft",
+      "adapter": "autodetect",
+      "careers_url": "https://www.nesfircroft.com/jobs",
+      "link_pattern": "/jobs/",
+      "exclude_pattern": "/jobs/?$|/job-alerts|/disciplines|/sectors",
+      "max_pages": 6,
+      "max_details": 90,
+      "enabled": true
+    },
+    {
+      "_verified": "Website pagination is JavaScript-driven, but the sitemap lists every job URL and robots.txt permits /jobs/.",
+      "id": "airswift",
+      "company": "Airswift",
+      "adapter": "sitemap",
+      "url": "https://www.airswift.com/sitemap.xml",
+      "url_pattern": "/jobs/",
+      "max_details": 150,
+      "enabled": true
+    },
+    {
+      "id": "brunel",
+      "company": "Brunel",
+      "adapter": "autodetect",
+      "careers_url": "https://www.brunel.net/en/jobs",
+      "link_pattern": "/en/jobs?/",
+      "max_pages": 5,
+      "max_details": 80,
+      "enabled": true
+    },
+    {
+      "id": "petroplan",
+      "company": "Petroplan",
+      "adapter": "autodetect",
+      "careers_url": "https://www.petroplan.com/jobs/",
+      "link_pattern": "/jobs?/",
+      "max_pages": 5,
+      "max_details": 80,
+      "enabled": true
+    },
+    {
+      "id": "oriongroup",
+      "company": "Orion Group",
+      "adapter": "autodetect",
+      "careers_url": "https://www.orionjobs.com/jobs",
+      "link_pattern": "/job/",
+      "max_pages": 5,
+      "max_details": 80,
+      "enabled": false
+    },
+    {
+      "_group": "Operators and EPC/service majors. Enable in batches - each adds a minute or two.",
+      "id": "adnoc",
+      "company": "ADNOC",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.adnoc.ae/",
+      "enabled": false
+    },
+    {
+      "id": "qatarenergy",
+      "company": "QatarEnergy",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.qatarenergy.qa/",
+      "enabled": false
+    },
+    {
+      "id": "aramco",
+      "company": "Saudi Aramco",
+      "adapter": "autodetect",
+      "careers_url": "https://www.aramco.com/en/careers/apply/search-jobs",
+      "enabled": false
+    },
+    {
+      "id": "pdo",
+      "company": "Petroleum Development Oman",
+      "adapter": "autodetect",
+      "careers_url": "https://jobs.pdo.co.om/",
+      "enabled": false
+    },
+    {
+      "id": "petrofac",
+      "company": "Petrofac",
+      "adapter": "autodetect",
+      "careers_url": "https://www.petrofac.com/careers/vacancies/",
+      "enabled": false
+    },
+    {
+      "id": "saipem",
+      "company": "Saipem",
+      "adapter": "autodetect",
+      "careers_url": "https://www.saipem.com/en/careers/job-opportunities",
+      "enabled": false
+    },
+    {
+      "id": "technipfmc",
+      "company": "TechnipFMC",
+      "adapter": "autodetect",
+      "careers_url": "https://www.technipfmc.com/en/careers/job-opportunities/",
+      "enabled": false
+    },
+    {
+      "id": "mcdermott",
+      "company": "McDermott",
+      "adapter": "autodetect",
+      "careers_url": "https://www.mcdermott.com/Careers",
+      "enabled": false
+    },
+    {
+      "id": "wood",
+      "company": "Wood",
+      "adapter": "autodetect",
+      "careers_url": "https://www.woodplc.com/careers/job-search",
+      "enabled": false
+    },
+    {
+      "id": "bakerhughes",
+      "company": "Baker Hughes",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.bakerhughes.com/global/en/search-results",
+      "enabled": false
+    },
+    {
+      "id": "slb",
+      "company": "SLB (Schlumberger)",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.slb.com/",
+      "enabled": false
+    },
+    {
+      "id": "halliburton",
+      "company": "Halliburton",
+      "adapter": "autodetect",
+      "careers_url": "https://jobs.halliburton.com/search/",
+      "enabled": false
+    },
+    {
+      "id": "weatherford",
+      "company": "Weatherford",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.weatherford.com/",
+      "enabled": false
+    },
+    {
+      "id": "chevron",
+      "company": "Chevron",
+      "adapter": "autodetect",
+      "careers_url": "https://careers.chevron.com/search-jobs",
+      "enabled": false
+    },
+    {
+      "id": "equinor",
+      "company": "Equinor",
+      "adapter": "autodetect",
+      "careers_url": "https://www.equinor.com/careers/vacancies",
+      "enabled": false
+    },
+    {
+      "id": "sonangol",
+      "company": "Sonangol",
+      "adapter": "autodetect",
+      "careers_url": "https://www.sonangol.co.ao/",
+      "enabled": false
+    }
+  ]
+}

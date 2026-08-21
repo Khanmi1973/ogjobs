@@ -1,0 +1,20 @@
+{
+  "_comment": "Runtime behaviour. Be polite: these are real employers' servers and staying slow keeps you unblocked.",
+
+  "network": {
+    "delay_seconds": 1.5,
+    "timeout_seconds": 30,
+    "max_retries": 2,
+    "respect_robots": true,
+    "verify_ssl": true,
+    "cache_ttl_seconds": 900,
+    "_cache_note": "Listing pages are cached for 15 min so repeated runs while you tune filters cost nothing. Job detail pages cache for 24h."
+  },
+
+  "output": {
+    "html": true,
+    "csv": true,
+    "rss": true,
+    "_note": "Everything lands in data/reports/. Open jobs.html in any browser."
+  }
+}

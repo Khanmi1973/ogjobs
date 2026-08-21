@@ -1,0 +1,56 @@
+{
+  "_comment": "THIS is the file you tune. Geography decides what is kept; keywords decide the ranking.",
+
+  "countries": {
+    "_note": "A job is kept if it matches one of these countries. Delete any you do not want.",
+    "include": [
+      "Saudi Arabia", "United Arab Emirates", "Qatar", "Kuwait", "Oman", "Bahrain",
+
+      "Angola", "Mozambique", "Uganda", "Nigeria", "Ghana", "Tanzania", "Kenya",
+      "Egypt", "Libya", "Algeria", "Congo (Republic)", "DR Congo", "Gabon",
+      "Equatorial Guinea", "Cameroon", "Ivory Coast", "Senegal", "Mauritania",
+      "Namibia", "South Africa", "South Sudan", "Sudan", "Chad", "Niger",
+      "Tunisia", "Morocco", "Ethiopia", "Zambia", "Zimbabwe", "Botswana",
+      "Guinea", "Madagascar", "Somalia", "Rwanda", "Malawi"
+    ],
+    "regions": ["GCC", "Africa"],
+    "_regions_note": "Catches adverts that only say 'West Africa' or 'Middle East' with no country.",
+    "allow_remote": true,
+    "allow_unknown_location": false,
+    "_unknown_note": "Set true to also keep adverts with no location at all (adds noise, but catches lazy postings)."
+  },
+
+  "roles": {
+    "_must_any_note": "EMPTY = keep every in-geography job at these companies (recommended to start). Once you see the volume, put YOUR discipline here, e.g. ['piping','welding','qa/qc','inspector'] and only those are kept.",
+    "must_any": [],
+
+    "_exclude_note": "Any advert containing one of these is thrown away. Add 'intern', 'graduate', 'apprentice' if you only want experienced roles.",
+    "exclude": [],
+
+    "_boost_note": "Ranking only, never filtering. Higher number = higher in the report. Add your own trade words with a big weight so your roles float to the top.",
+    "boost": {
+      "fpso": 8, "lng": 8, "offshore": 6, "subsea": 6, "commissioning": 7,
+      "turnaround": 6, "shutdown": 5, "drilling": 6, "workover": 5, "completions": 5,
+      "wells": 4, "rotating equipment": 6, "static equipment": 5, "pipeline": 5,
+      "piping": 5, "welding": 5, "ndt": 6, "qa/qc": 6, "quality control": 5,
+      "inspector": 6, "inspection": 4, "hse": 5, "safety": 4, "process engineer": 5,
+      "mechanical": 4, "electrical": 4, "instrumentation": 5, "instrument": 3,
+      "civil": 3, "structural": 3, "corrosion": 5, "integrity": 5, "reliability": 5,
+      "maintenance": 4, "operations": 3, "production": 3, "technician": 3,
+      "supervisor": 4, "superintendent": 5, "engineer": 3, "manager": 3,
+      "planner": 4, "scheduler": 4, "cost control": 4, "contracts": 3,
+      "procurement": 3, "document control": 3, "project": 2,
+      "rotational": 6, "expat": 5, "residential": 3, "camp": 2,
+
+      "_negatives_note": "Negative weights push things down without removing them.",
+      "intern": -12, "internship": -12, "apprentice": -10, "graduate programme": -10,
+      "student": -10, "volunteer": -15
+    }
+  },
+
+  "min_score": 0,
+  "_min_score_note": "Raise to 45-60 once you have a feel for scores, to cut the tail.",
+
+  "max_age_days": 90,
+  "_age_note": "0 disables the age cut. Many sites publish no date; those are always kept."
+}

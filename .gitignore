@@ -1,0 +1,15 @@
+# Downloaded page cache - large, temporary, never worth committing.
+data/cache/
+
+# SQLite side files. jobs.db itself IS committed, so the "NEW" badges keep
+# working across runs on GitHub.
+data/jobs.db-wal
+data/jobs.db-shm
+
+# Local report output. The published copy lives in docs/.
+data/reports/
+
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
