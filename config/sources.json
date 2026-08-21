@@ -220,15 +220,12 @@
       "enabled": true
     },
     {
-      "_status": "NOTHING TO SCRAPE RIGHT NOW - SAIPEM'S OWN NOTICE. jobs.saipem.com currently displays: 'List of positions under maintenance. For complete list of positions please refer to Linkedin Saipem SpA Page.' There is no job data on the site to read. Re-probe once they restore it: python -m ogjobs probe https://jobs.saipem.com/ --test",
+      "_verified": "Confirmed live: 279 jobs. The board is an nCore JavaScript app that loads one static JSON file with every vacancy. Its HTML shell carries a stale 'positions under maintenance' notice - ignore that, the data is current.",
       "id": "saipem",
       "company": "Saipem",
-      "adapter": "links",
-      "urls": [
-        "https://jobs.saipem.com/"
-      ],
-      "link_pattern": "/job",
-      "enabled": false
+      "adapter": "ncore",
+      "feed": "https://jobs.saipem.com/positions_saipem.json",
+      "enabled": true
     },
     {
       "id": "technipfmc",

@@ -456,6 +456,38 @@ def phenom(f, cfg):
     return out
 
 
+@adapter("ncore")
+def ncore(f, cfg):
+    """nCore-hosted boards (Saipem).
+
+    The page is a JavaScript shell - it even carries a stale "positions under
+    maintenance" notice - but it loads one static JSON file holding every
+    vacancy, which is far better than scraping the rendered cards.
+    """
+    url = cfg.get("feed") or (cfg["base"].rstrip("/") + "/positions_saipem.json")
+    d = f.get_json(url)
+    groups = ((d or {}).get("data") or {}).get("Positions") or {}
+    out = []
+    for company, jobs in groups.items():
+        if not isinstance(jobs, list):
+            continue
+        for j in jobs:
+            if not isinstance(j, dict) or not j.get("title"):
+                continue
+            out.append(_mk(cfg, title=j.get("title", ""),
+                           location=j.get("countryText") or j.get("country", ""),
+                           url=j.get("url", ""),
+                           posted=j.get("orderDate", ""),
+                           department=j.get("sectorText", ""),
+                           external_id=str(j.get("url", "")).rstrip("/").split("/")[-1],
+                           description=H.strip_tags(j.get("description", ""))))
+            # The hiring entity varies per job; keep it when the config has
+            # not pinned a display name.
+            if not cfg.get("company"):
+                out[-1].company = j.get("root-node") or company
+    return out
+
+
 @adapter("zoho_recruit")
 def zoho_recruit(f, cfg):
     """Zoho Recruit career sites (Q-Sourcing and many African agencies).
