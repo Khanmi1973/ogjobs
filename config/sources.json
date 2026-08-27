@@ -403,6 +403,22 @@
         "https://www.join.spie-job.com/handlers/offerRss.ashx?LCID=1036"
       ],
       "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: careers.hr platform. Job pages carry schema.org JobPosting data, so titles, dates and countries come through cleanly. Five country sites exist; Guyana and Ghana currently carry vacancies, Singapore/Vietnam/Australia are live but empty today.",
+      "id": "modec",
+      "company": "MODEC",
+      "adapter": "links",
+      "urls": [
+        "https://modec-gy.us.careers.hr/",
+        "https://modec-gh.us.careers.hr/",
+        "https://modec-sg.us.careers.hr/",
+        "https://modec-vn.us.careers.hr/",
+        "https://modec-au.us.careers.hr/"
+      ],
+      "link_pattern": "/p/[0-9a-f]{16,}",
+      "max_details": 120,
+      "enabled": true
     }
   ]
 }
