@@ -354,8 +354,10 @@ def build_html(jobs, meta=None, live=False):
                if snippet else ""))
 
     parts.append("</div>")
-    parts.append('<footer>Built by ogjobs. Data read directly from each employer&rsquo;s own public '
-                 'careers site. Always apply through the official link above &mdash; never pay a fee '
+    parts.append('<footer>Built by Muhammad Imran Khan '
+                 '(<a href="tel:+923346844642" style="color:var(--accent)">+92 334 6844642</a>). '
+                 'Data read directly from each employer&rsquo;s own public careers site. '
+                 'Always apply through the official link above &mdash; never pay a fee '
                  'to a recruiter for a job placement.</footer>')
     parts.append("</div><script>%s</script>" % JS)
     if live:
