@@ -4,8 +4,10 @@ name: Scan jobs
 # GitHub Pages, so the dashboard works on your phone with your PC switched off.
 on:
   schedule:
-    # 05:00 UTC daily. GitHub queues cron jobs, so it may start a little late.
-    - cron: "0 5 * * *"
+    # Every 4 hours: 00:10, 04:10, 08:10, 12:10, 16:10, 20:10 UTC.
+    # Ten past the hour deliberately - GitHub queues cron jobs and the top of
+    # the hour is its busiest slot, so off-peak minutes start sooner.
+    - cron: "10 */4 * * *"
   workflow_dispatch:        # this is what the "Refresh jobs" button uses
     inputs:
       fresh:
