@@ -228,10 +228,12 @@
       "enabled": true
     },
     {
+      "_status": "CANNOT SCRAPE: careers.technipfmc.com renders its job list entirely in the browser. The homepage, /search/, /viewalljobs/ and the exact filtered URL all return pages with zero job markup; there is no RSS, no sitemap and no API in the HTML, and a consent cookie made no difference. Subsea 7 runs the same SuccessFactors platform and DOES render server-side, so this is TechnipFMC's own configuration. Use their site manually or their LinkedIn page. Re-probe occasionally: python -m ogjobs probe https://careers.technipfmc.com/ --test",
       "id": "technipfmc",
       "company": "TechnipFMC",
-      "adapter": "autodetect",
-      "careers_url": "https://www.technipfmc.com/en/careers/job-opportunities/",
+      "adapter": "successfactors",
+      "base": "https://careers.technipfmc.com",
+      "max_pages": 4,
       "enabled": false
     },
     {
@@ -418,6 +420,24 @@
       ],
       "link_pattern": "/p/[0-9a-f]{16,}",
       "max_details": 120,
+      "enabled": true
+    },
+    {
+      "_verified": "Confirmed live: SuccessFactors, 59 jobs (45 onshore + 14 offshore, the same set your two /go/ category links show). Uses the newer job-tile layout, so location comes from the URL slug rather than a location column, and the tiles carry a closing date rather than a posted date.",
+      "id": "subsea7",
+      "company": "Subsea 7",
+      "adapter": "successfactors",
+      "base": "https://careers.subsea7.com",
+      "queries": [
+        "",
+        "Angola",
+        "Nigeria",
+        "Egypt",
+        "Saudi",
+        "UAE",
+        "Qatar"
+      ],
+      "max_pages": 6,
       "enabled": true
     }
   ]

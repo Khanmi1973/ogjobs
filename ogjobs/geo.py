@@ -120,7 +120,11 @@ def _norm(s):
         return ""
     s = unicodedata.normalize("NFKD", str(s))
     s = "".join(c for c in s if not unicodedata.combining(c))
-    return re.sub(r"\s+", " ", s.lower()).strip()
+    # Hyphens and underscores act as word separators. Career sites build URL
+    # slugs like "Port-Harcourt-Welding-Inspector", and without this a
+    # two-word city never matches its alias.
+    s = re.sub(r"[-_]+", " ", s.lower())
+    return re.sub(r"\s+", " ", s).strip()
 
 
 def _pad(s):

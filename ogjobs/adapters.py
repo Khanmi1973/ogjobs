@@ -124,6 +124,27 @@ def workday(f, cfg):
     return jobs
 
 
+def _sf_slug_location(href, title):
+    """Recover the location from a SuccessFactors job URL.
+
+    SuccessFactors builds them as /job/<Location>-<Title>/<id>/. The newer
+    "job tile" layout (Subsea 7) has no location column at all, so the slug is
+    the only source. Taking the first hyphen-separated token turns "Kuala
+    Lumpur" into "Kuala" and "Port Harcourt" into "Port", so instead strip the
+    slugified title off the end and keep whatever precedes it.
+    """
+    if "/job/" not in (href or ""):
+        return ""
+    seg = urllib.parse.unquote(href.split("/job/")[-1]).split("/")[0]
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", seg).strip("-")
+    tslug = re.sub(r"[^A-Za-z0-9]+", "-", title or "").strip("-")
+    if tslug and slug.lower().endswith(tslug.lower()):
+        loc = slug[: len(slug) - len(tslug)].strip("-")
+        if loc:
+            return loc.replace("-", " ").strip()
+    return seg.split("-")[0]
+
+
 # --------------------------------------------------------------------------
 # SAP SuccessFactors career site (ExxonMobil and many others)
 # --------------------------------------------------------------------------
@@ -162,7 +183,7 @@ def successfactors(f, cfg):
                 date = re.search(r"class=\"[^\"]*jobDate[^\"]*\"[^>]*>(.*?)</", row, re.S | re.I)
                 dept = re.search(r"class=\"[^\"]*jobDepartment[^\"]*\"[^>]*>(.*?)</", row, re.S | re.I)
                 # SF encodes the location in the slug too: /job/Luanda-Engineer-.../123/
-                slug_loc = href.split("/job/")[-1].split("-")[0] if "/job/" in href else ""
+                slug_loc = _sf_slug_location(href, title)
                 jobs.append(_mk(cfg, title=title, url=url_abs,
                                 location=H.strip_tags(loc.group(1), False) if loc else slug_loc,
                                 posted=H.strip_tags(date.group(1), False) if date else "",
