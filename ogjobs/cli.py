@@ -12,7 +12,7 @@ from .pipeline import Runner, load_json
 
 
 def cmd_run(args):
-    r = Runner(verbose=not args.quiet)
+    r = Runner(verbose=not args.quiet, fresh=args.fresh)
     only = set(args.source or [])
     r.run(only=only or None, dry_run=args.dry_run, no_store=args.no_store,
           deep=args.deep)
@@ -226,6 +226,8 @@ def build_parser():
     r.add_argument("--no-report", action="store_true")
     r.add_argument("--open", action="store_true", help="open the HTML report when finished")
     r.add_argument("--quiet", "-q", action="store_true")
+    r.add_argument("--fresh", action="store_true",
+                   help="ignore the local page cache and re-download everything")
     r.add_argument("--deep", type=int, default=1, metavar="N",
                    help="multiply each source's page/detail cap by N for fuller "
                         "coverage (slower). --deep 5 reads essentially everything.")

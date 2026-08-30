@@ -2,7 +2,21 @@
 __pycache__/
 *.pyc
 
-# Local server log and scratch files from the ratio harvester
+# Downloaded page cache. MUST stay untracked: git checkout stamps files with
+# the checkout time, so a committed cache looks freshly downloaded to every
+# CI run and the scraper serves the whole scan from disk in ~30 seconds
+# without touching a single career site.
+data/cache/
+
+# SQLite side files. jobs.db itself IS committed, so the "NEW" badges and
+# first-seen dates survive across runs.
+data/jobs.db-wal
+data/jobs.db-shm
+
+# Local report output. The published copy lives in docs/.
+data/reports/
+
+# Local server log and scratch files
 data/server.log
 data/_*
 

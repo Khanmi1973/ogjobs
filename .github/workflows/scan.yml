@@ -38,8 +38,31 @@ jobs:
           # No pip install step: ogjobs uses only the standard library.
 
       - name: Scan every enabled source
-        run: python -m ogjobs run --no-report
+        # --fresh is deliberate. A committed page cache once made every CI run
+        # finish in 30 seconds serving stale pages from disk, because checkout
+        # stamps files with the current time so the cache always looked new.
+        # data/cache is gitignored again, and this flag makes it impossible to
+        # regress silently.
+        run: python -m ogjobs run --no-report --fresh
         continue-on-error: true    # one dead site must not fail the whole run
+
+      - name: Fail loudly if the scan was suspiciously quick
+        # A real sweep reads thousands of adverts. Far fewer means sources are
+        # being skipped, and a silent success is worse than a red cross.
+        run: |
+          python - <<'PY'
+          import sqlite3, sys
+          db = sqlite3.connect("data/jobs.db")
+          row = db.execute(
+              "SELECT found, kept FROM runs ORDER BY id DESC LIMIT 1").fetchone()
+          if not row:
+              sys.exit("No run was recorded - the scan did not complete.")
+          found, kept = row
+          print("last run scraped %s adverts, %s matched" % (found, kept))
+          if found < 1000:
+              sys.exit("Only %s adverts scraped; expected several thousand. "
+                       "Check the scan log above for failing sources." % found)
+          PY
 
       - name: Build the dashboard into docs/
         run: |
