@@ -282,18 +282,28 @@
       "enabled": false
     },
     {
+      "_verified": "Confirmed live: Workday tenant 'chevron', site 'jobs' (139 jobs).",
       "id": "chevron",
       "company": "Chevron",
-      "adapter": "autodetect",
-      "careers_url": "https://careers.chevron.com/search-jobs",
-      "enabled": false
+      "adapter": "workday",
+      "host": "chevron.wd5.myworkdayjobs.com",
+      "tenant": "chevron",
+      "site": "jobs",
+      "queries": [""],
+      "max_pages": 12,
+      "enabled": true
     },
     {
+      "_verified": "Confirmed live: Workday tenant 'equinor', site 'EQNR' (11 jobs).",
       "id": "equinor",
       "company": "Equinor",
-      "adapter": "autodetect",
-      "careers_url": "https://www.equinor.com/careers/vacancies",
-      "enabled": false
+      "adapter": "workday",
+      "host": "equinor.wd3.myworkdayjobs.com",
+      "tenant": "equinor",
+      "site": "EQNR",
+      "queries": [""],
+      "max_pages": 6,
+      "enabled": true
     },
     {
       "id": "sonangol",
