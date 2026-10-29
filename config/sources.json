@@ -234,7 +234,7 @@
       "adapter": "successfactors",
       "base": "https://careers.technipfmc.com",
       "max_pages": 4,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "mcdermott",
