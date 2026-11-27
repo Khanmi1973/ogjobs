@@ -327,6 +327,16 @@
       "enabled": true
     },
     {
+      "_status": "Added from careers.noc.qa (North Oil Company, Qatar). SAP SuccessFactors, same platform as QatarEnergy LNG. Not yet verified with a live scan: run python -m ogjobs probe https://careers.noc.qa/ --test",
+      "id": "noc",
+      "company": "North Oil Company",
+      "adapter": "successfactors",
+      "base": "https://careers.noc.qa",
+      "queries": ["", "Qatar", "Ras Laffan"],
+      "max_pages": 6,
+      "enabled": true
+    },
+    {
       "_verified": "Confirmed live: 59 job pages. NOTE domain is trUEnorthafrica.com (was wrong before).",
       "id": "truenorth",
       "company": "TrueNorth Africa",
